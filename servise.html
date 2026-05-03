@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>ИМС РУС — Услуги</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+</head>
+<body>
+    <div id="preloader">
+        <div class="preloader-content">
+            <div class="preloader-spinner"></div>
+            <p>Загрузка...</p>
+        </div>
+    </div>
+
+    <div id="particles-js" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3; pointer-events: none;"></div>
+
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="shape shape--1"></div>
+    <div class="shape shape--2"></div>
+    <div class="shape shape--3"></div>
+    <div class="shape shape--4"></div>
+
+    <div class="industry-bg" id="industryBg"></div>
+
+    <header id="header">
+        <div class="container">
+            <div class="header__inner">
+                <a href="index.html" class="logo">
+                    <img id="logoImg" src="images/logo.png" alt="ИМС РУС">
+                </a>
+                <nav class="nav">
+                    <a href="index.html">Главная</a>
+                    <a href="about.html">О нас</a>
+                    <a href="servise.html" class="active">Услуги</a>
+                    <a href="products.html">Оборудование</a>
+                    <a href="vacancy.html">Вакансии</a>
+                    <a href="contacts.html">Контакты</a>
+                </nav>
+                <div class="burger" id="burger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="mobile-menu" id="mobileMenu">
+                <a href="index.html">Главная</a>
+                <a href="about.html">О нас</a>
+                <a href="servise.html">Услуги</a>
+                <a href="products.html">Оборудование</a>
+                <a href="vacancy.html">Вакансии</a>
+                <a href="contacts.html">Контакты</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero" style="min-height: 600px;">
+            <div class="hero__bg"></div>
+            <div class="hero__overlay parallax-bg" style="background-image: url('images/service.png'); opacity: 0.4;"></div>
+            <div class="hero__pattern"></div>
+            <div class="container hero__content" style="justify-content: center;">
+                <div class="hero__text-panel">
+                    <h1 class="hero__title">Услуги</h1>
+                    <p class="hero__subtitle">ИМС Рус — надёжный поставщик первоклассных<br>сервисных услуг
+и оборудования для Вашего предприятия</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider">
+            <svg class="divider-svg" viewBox="0 0 1200 60" preserveAspectRatio="none">
+                <path class="divider-path" d="M0,30 Q300,0 600,30 T1200,30" />
+            </svg>
+        </div>
+
+        <section class="section">
+            <div class="container reveal">
+                <div class="text-card" style="max-width: 900px; margin: 0 auto;">
+                    <h2 class="section__title " style="font-size: 34px; margin-bottom: 40px;">ИМС Рус предоставляет первоклассные сервисные услуги для вашего оборудования</h2>
+                    <div class="insight-cards">
+                        <div class="insight-card"><div class="insight-card__icon"></div><div class="insight-card__text">Надзор за монтажом и вводом оборудования в эксплуатацию</div></div>
+                        <div class="insight-card"><div class="insight-card__icon"></div><div class="insight-card__text">Услуги по обучению на месте эксплуатации и техническому обслуживанию оборудования</div></div>
+                        <div class="insight-card"><div class="insight-card__icon"></div><div class="insight-card__text">Техническая поддержка при ремонте, техническом обслуживании и эксплуатации оборудования</div></div>
+                        <div class="insight-card"><div class="insight-card__icon"></div><div class="insight-card__text">Круглосуточное сервисное обслуживание на месте</div></div>
+                        <div class="insight-card"><div class="insight-card__icon"></div><div class="insight-card__text">Ремонт составных частей и единиц оборудования</div></div>
+                        <div class="insight-card "><div class="insight-card__icon"></div><div class="insight-card__text">Поставка запасных и изнашиваемых частей</div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section conveyor-bg" style="background: #f8f8f8;">
+            <div class="container reveal">
+                <div class="detail-card">
+                    <div class="detail-card__image dynamic-gradient-left js-connect-item">
+                        <img src="images/anona.jpg" alt="Надзор за монтажом">
+                    </div>
+                    <div class="detail-card__content">
+                        <h3 class="detail-card__title">Надзор за монтажом и вводом оборудования в эксплуатацию</h3>
+                        <div class="insight-cards">
+                            <div class="insight-card"><div class="insight-card__icon"></div><div class="insight-card__text">Технический надзор в процессе монтажа оборудования</div></div>
+                            <div class="insight-card"><div class="insight-card__icon"><i class=""></i></div><div class="insight-card__text">Технический надзор в процессе пусконаладочных работ и ввода в эксплуатацию</div></div>
+                            <div class="insight-card"><div class="insight-card__icon"><i class=""></i></div><div class="insight-card__text">Техническая поддержка в процессе эксплуатации оборудования</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-card detail-card--reverse">
+                    <div class="detail-card__image1 dynamic-gradient-right js-connect-item">
+                        <img src="images/obuchenie.jpg" alt="Обучение персонала">
+                    </div>
+                    <div class="detail-card__content">
+                        <h3 class="detail-card__title">Обучение персонала</h3>
+                        <div class="insight-cards">
+                            <div class="insight-card"><div class="insight-card__icon"></div><div class="insight-card__text">Обучение операторов и обслуживающего персонала</div></div>
+                            <div class="insight-card"><div class="insight-card__icon"><i class=""></i></div><div class="insight-card__text">Обучение сервисного персонала</div></div>
+                            <div class="insight-card"><div class="insight-card__icon"><i class=""></i></div><div class="insight-card__text">Обучение специалистов по электротехнической части и системам автоматизации</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <div class="detail-card__image2 dynamic-gradient-left js-connect-item">
+                        <img src="images/podd.png" alt="Сервис">
+                    </div>
+                    <div class="detail-card__content">
+                        <h3 class="detail-card__title">Сервисная поддержка</h3>
+                        <div class="insight-cards">
+                            <div class="insight-card"><div class="insight-card__icon"></div><div class="insight-card__text">Техническая поддержка 24/7</div></div>
+                            <div class="insight-card"><div class="insight-card__icon"></div><div class="insight-card__text">Выезд специалистов на объект</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section pulse-bg">
+            <div class="container reveal">
+                <h2 class="section__title">Фотогалерея</h2>
+                <div class="gallery">
+                    <div class="gallery__item"><img src="images/photo1719487685_5.jpeg" alt=""></div>
+                    <div class="gallery__item"><img src="images/8.jpg" alt=""></div>
+                    <div class="gallery__item"><img src="images/IMG_7139.jpg" alt=""></div>
+                    <div class="gallery__item"><img src="images/car.jpg" alt=""></div>
+                    <div class="gallery__item"><img src="images/1.jpg" alt=""></div>
+                    <div class="gallery__item"><img src="images/dydya.jpg" alt=""></div>
+                    <div class="gallery__item"><img src="images/work.jpg" alt=""></div>
+                    <div class="gallery__item"><img src="images/IMG_6825.JPG" alt=""></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer id="contacts">
+        <div class="container">
+            <div class="footer__grid">
+        <div class="footer__col footer__col--logo">
+            <img src="images/logo_negate.png" alt="ИМС РУС" class="no-lightbox" style="max-width: 280px; margin-bottom: 15px; scale: 1.3;">
+            <p>Интеллектуальные решения для горной промышленности</p>
+        </div>
+        <div class="footer__col footer__col--menu">
+        <h4>Меню</h4>
+        <div class="menu-links">
+            <a href="index.html"><i class="fas fa-home"></i> Главная</a>
+            <a href="about.html"><i class="fas fa-users"></i> О нас</a>
+            <a href="servise.html"><i class="fas fa-cogs"></i> Услуги</a>
+            <a href="products.html"><i class="fas fa-tools"></i> Оборудование</a>
+            <a href="vacancy.html"><i class="fas fa-briefcase"></i> Вакансии</a>
+            <a href="contacts.html"><i class="fas fa-phone-alt"></i> Контакты</a>
+        </div>
+
+        <h4 style="margin-top: 30px;">Скачать материалы</h4>
+        <div class="materials-links">
+            <a href="download/1.pdf" target="_blank"><i class="fas fa-file-powerpoint"></i> Команда IMS</a>
+            <a href="download/2.pdf" target="_blank"><i class="fas fa-file-powerpoint"></i> Технологии IMS</a>
+            <a href="download/IMS_3.pptx" target="_blank"><i class="fas fa-file-powerpoint"></i> HPGR Expert Service</a>
+        </div>
+    </div>
+        </div>
+        <div class="footer__bottom">
+    © 2026 ООО «ИМС Рус». Все права защищены.
+</div>
+    </footer>
+
+    <button class="scroll-top" id="scrollTop"><i class="fas fa-arrow-up"></i></button>
+
+    <script src="script/script.js"></script>
+</body>
+</html>
