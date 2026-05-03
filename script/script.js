@@ -1104,3 +1104,71 @@ if (dividers.length) {
 //     window.addEventListener('resize', updateLogoByScroll);
 //     updateLogoByScroll();
 // }
+
+// === ОТПРАВКА ФОРМ ЧЕРЕЗ FORMSUBMIT (AJAX) ===
+function setupAjaxForm(formId) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); // Блокируем стандартный переход страницы
+
+        // Специфичная валидация только для формы вакансий
+        if (formId === 'vacancyForm') {
+            let allFilled = true;
+            for (let i = 1; i <= 10; i++) {
+                const field = document.getElementById('q' + i);
+                if (!field || !field.value.trim()) {
+                    allFilled = false;
+                    break;
+                }
+            }
+            if (!allFilled) {
+                alert('Пожалуйста, заполните все тестовые вопросы (раздел "Пройти тестирование") перед отправкой заявки.');
+                return; // Прерываем отправку, если тест не пройден
+            }
+        }
+
+        // Блокируем кнопку, чтобы избежать двойных кликов
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+        submitBtn.disabled = true;
+
+        // Собираем данные (включая загруженные файлы)
+        const formData = new FormData(form);
+        
+        // Для AJAX отправки FormSubmit требует добавления /ajax/ в URL
+        const actionUrl = form.getAttribute('action').replace('formsubmit.co/', 'formsubmit.co/ajax/');
+
+        fetch(actionUrl, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json' // Указываем, что ждем JSON в ответ
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Ваша заявка успешно отправлена!');
+                form.reset(); // Очищаем поля формы после успеха
+            } else {
+                alert('Произошла ошибка при отправке. Попробуйте позже.');
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка FormSubmit:', error);
+            alert('Ошибка сети. Проверьте подключение к интернету и повторите попытку.');
+        })
+        .finally(() => {
+            // Возвращаем кнопку в исходное состояние
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+        });
+    });
+}
+
+// Инициализируем перехват для обеих форм
+setupAjaxForm('contactsForm');
+setupAjaxForm('vacancyForm');
