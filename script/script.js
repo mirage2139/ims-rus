@@ -1185,25 +1185,64 @@ function showToast(message, type = 'success') {
     }, 5000);
 }
 
-// === ОТПРАВКА ФОРМ ЧЕРЕЗ FORMSUBMIT (AJAX) ===
+// === ОТПРАВКА ФОРМ ЧЕРЕЗ FORMSUBMIT (УМНЫЙ РЕЖИМ) ===
 function setupAjaxForm(formId) {
     const form = document.getElementById(formId);
     if (!form) return;
 
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
+    // Проверяем, есть ли в форме поле для загрузки файлов
+    const hasFiles = form.querySelector('input[type="file"]') !== null;
+    let isSubmitting = false;
+    let submitBtn = null;
+    let originalBtnText = '';
 
+    // Если есть файлы, используем скрытый iframe (т.к. FormSubmit AJAX не поддерживает файлы)
+    if (hasFiles) {
+        const iframeName = 'hidden_iframe_' + formId;
+        let iframe = document.getElementById(iframeName);
+        
+        // Создаем невидимый iframe, если его еще нет
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.name = iframeName;
+            iframe.id = iframeName;
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+
+            // Слушаем момент, когда FormSubmit вернет ответ в наш невидимый iframe
+            iframe.addEventListener('load', function() {
+                if (isSubmitting) {
+                    showToast('Сообщение и файл успешно отправлены! Мы скоро свяжемся с вами.', 'success');
+                    form.reset(); // Очищаем форму
+                    isSubmitting = false;
+                    
+                    // Возвращаем кнопку в нормальное состояние
+                    if (submitBtn) {
+                        submitBtn.innerHTML = originalBtnText;
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }
+                }
+            });
+        }
+        // Направляем отправку формы прямо в этот iframe
+        form.target = iframeName; 
+    }
+
+    form.addEventListener('submit', function(e) {
         // 1. ПРОВЕРКА РАЗМЕРА ФАЙЛА (ДО 10 МБ)
-        const fileInputs = form.querySelectorAll('input[type="file"]');
-        for (let input of fileInputs) {
-            if (input.files && input.files.length > 0) {
-                const fileSize = input.files[0].size; // Размер в байтах
-                const maxSize = 10 * 1024 * 1024; // 10 МБ в байтах
-                
-                if (fileSize > maxSize) {
-                    showToast('Размер файла превышает 10 МБ. Пожалуйста, прикрепите файл меньшего размера.', 'error');
-                    input.value = ''; // Сбрасываем выбранный тяжелый файл
-                    return; // Прерываем отправку формы
+        if (hasFiles) {
+            const fileInputs = form.querySelectorAll('input[type="file"]');
+            for (let input of fileInputs) {
+                if (input.files && input.files.length > 0) {
+                    const fileSize = input.files[0].size; 
+                    const maxSize = 10 * 1024 * 1024; 
+                    if (fileSize > maxSize) {
+                        e.preventDefault(); // Обязательно прерываем отправку
+                        showToast('Размер файла превышает 10 МБ. Пожалуйста, прикрепите файл меньшего размера.', 'error');
+                        input.value = ''; // Сбрасываем выбранный файл
+                        return; 
+                    }
                 }
             }
         }
@@ -1219,9 +1258,8 @@ function setupAjaxForm(formId) {
                 }
             }
             if (!allFilled) {
+                e.preventDefault(); // Обязательно прерываем отправку
                 showToast('Пожалуйста, пройдите тестирование (нажмите кнопку "Пройти тестирование").', 'warning');
-                
-                // Для удобства сразу открываем окно с тестом
                 const modal = document.getElementById('questionModal');
                 if(modal) {
                     modal.classList.add('active');
@@ -1231,46 +1269,52 @@ function setupAjaxForm(formId) {
             }
         }
 
-        // 3. БЛОКИРОВКА КНОПКИ НА ВРЕМЯ ОТПРАВКИ
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalBtnText = submitBtn.innerHTML;
+        // 3. БЛОКИРОВКА КНОПКИ (чтобы не нажали дважды)
+        submitBtn = form.querySelector('button[type="submit"]');
+        originalBtnText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
         submitBtn.disabled = true;
         submitBtn.style.opacity = '0.7';
 
         // 4. ОТПРАВКА ДАННЫХ
-        const formData = new FormData(form);
-        const actionUrl = form.getAttribute('action').replace('formsubmit.co/', 'formsubmit.co/ajax/');
+        if (hasFiles) {
+            // ВАЖНО: Мы НЕ делаем e.preventDefault() для формы с файлами.
+            // Браузер сам отправит её по стандартному пути, но результат загрузит в невидимый iframe.
+            isSubmitting = true;
+        } else {
+            // Если файлов нет (форма контактов), используем современный Fetch API
+            e.preventDefault();
+            const formData = new FormData(form);
+            const actionUrl = form.getAttribute('action').replace('formsubmit.co/', 'formsubmit.co/ajax/');
 
-        fetch(actionUrl, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('Сообщение успешно отправлено! Мы скоро свяжемся с вами.', 'success');
-                form.reset(); // Очищаем форму
-            } else {
-                showToast('Не удалось отправить сообщение. Сервер отклонил запрос.', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Ошибка отправки:', error);
-            showToast('Отсутствует подключение к сети. Проверьте интернет и попробуйте снова.', 'error');
-        })
-        .finally(() => {
-            // Возвращаем кнопку в нормальное состояние
-            submitBtn.innerHTML = originalBtnText;
-            submitBtn.disabled = false;
-            submitBtn.style.opacity = '1';
-        });
+            fetch(actionUrl, {
+                method: 'POST',
+                body: formData,
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Сообщение успешно отправлено! Мы скоро свяжемся с вами.', 'success');
+                    form.reset();
+                } else {
+                    showToast('Не удалось отправить сообщение. Сервер отклонил запрос.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка отправки:', error);
+                showToast('Отсутствует подключение к сети. Проверьте интернет и попробуйте снова.', 'error');
+            })
+            .finally(() => {
+                // Разблокируем кнопку
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            });
+        }
     });
 }
 
-// Инициализация (ID "contactsForm" вы должны были добавить в HTML на предыдущем шаге)
+// Инициализация обеих форм
 setupAjaxForm('contactsForm');
 setupAjaxForm('vacancyForm');
