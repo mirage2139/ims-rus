@@ -1119,7 +1119,7 @@ document.addEventListener('submit', function(e) {
     }
 });
 // === СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ===
-// Динамически добавляем стили, чтобы не менять CSS-файлы
+// Динамически добавляем стили
 const toastStyles = document.createElement('style');
 toastStyles.innerHTML = `
     .toast-container {
@@ -1151,9 +1151,9 @@ toastStyles.innerHTML = `
         opacity: 0;
         transform: translateX(100%);
     }
-    .toast.success { background-color: #223387; } /* Фирменный синий ИМС РУС */
-    .toast.error { background-color: #e53935; } /* Красный для ошибок */
-    .toast.warning { background-color: #fb8c00; color: #fff; } /* Оранжевый для предупреждений */
+    .toast.success { background-color: #223387; }
+    .toast.error { background-color: #e53935; }
+    .toast.warning { background-color: #fb8c00; color: #fff; }
     @keyframes slideInToast {
         to { opacity: 1; transform: translateX(0); }
     }
@@ -1164,12 +1164,10 @@ const toastContainer = document.createElement('div');
 toastContainer.className = 'toast-container';
 document.body.appendChild(toastContainer);
 
-// Функция вызова красивого уведомления
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     
-    // Подбираем иконку FontAwesome (библиотека уже подключена у вас на сайте)
     let icon = 'fa-info-circle';
     if (type === 'success') icon = 'fa-check-circle';
     if (type === 'error') icon = 'fa-exclamation-circle';
@@ -1178,76 +1176,52 @@ function showToast(message, type = 'success') {
     toast.innerHTML = `<i class="fas ${icon}" style="font-size: 1.4em;"></i> <span style="line-height: 1.4;">${message}</span>`;
     toastContainer.appendChild(toast);
 
-    // Автоматически скрываем через 5 секунд
     setTimeout(() => {
         toast.classList.add('hide');
-        setTimeout(() => toast.remove(), 400); // Ждем завершения анимации
+        setTimeout(() => toast.remove(), 400);
     }, 5000);
 }
 
-// === ОТПРАВКА ФОРМ ЧЕРЕЗ FORMSUBMIT (УМНЫЙ РЕЖИМ) ===
-function setupAjaxForm(formId) {
+// === ЛОВИМ УСПЕШНОЕ ВОЗВРАЩЕНИЕ ПОСЛЕ СТАНДАРТНОЙ ОТПРАВКИ ===
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('form_status') === 'success') {
+        // Если в ссылке есть form_status=success, показываем уведомление
+        setTimeout(() => {
+            showToast('Заявка и резюме успешно отправлены! Мы скоро свяжемся с вами.', 'success');
+        }, 500);
+        
+        // Очищаем ссылку от мусора, чтобы уведомление не висело при обновлении страницы
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+    }
+});
+
+// === ОТПРАВКА ФОРМ ===
+function setupSmartForm(formId) {
     const form = document.getElementById(formId);
     if (!form) return;
 
-    // Проверяем, есть ли в форме поле для загрузки файлов
     const hasFiles = form.querySelector('input[type="file"]') !== null;
-    let isSubmitting = false;
-    let submitBtn = null;
-    let originalBtnText = '';
-
-    // Если есть файлы, используем скрытый iframe (т.к. FormSubmit AJAX не поддерживает файлы)
-    if (hasFiles) {
-        const iframeName = 'hidden_iframe_' + formId;
-        let iframe = document.getElementById(iframeName);
-        
-        // Создаем невидимый iframe, если его еще нет
-        if (!iframe) {
-            iframe = document.createElement('iframe');
-            iframe.name = iframeName;
-            iframe.id = iframeName;
-            iframe.style.display = 'none';
-            document.body.appendChild(iframe);
-
-            // Слушаем момент, когда FormSubmit вернет ответ в наш невидимый iframe
-            iframe.addEventListener('load', function() {
-                if (isSubmitting) {
-                    showToast('Сообщение и файл успешно отправлены! Мы скоро свяжемся с вами.', 'success');
-                    form.reset(); // Очищаем форму
-                    isSubmitting = false;
-                    
-                    // Возвращаем кнопку в нормальное состояние
-                    if (submitBtn) {
-                        submitBtn.innerHTML = originalBtnText;
-                        submitBtn.disabled = false;
-                        submitBtn.style.opacity = '1';
-                    }
-                }
-            });
-        }
-        // Направляем отправку формы прямо в этот iframe
-        form.target = iframeName; 
-    }
 
     form.addEventListener('submit', function(e) {
+        e.preventDefault(); // Изначально тормозим любую форму для валидации
+
         // 1. ПРОВЕРКА РАЗМЕРА ФАЙЛА (ДО 10 МБ)
         if (hasFiles) {
             const fileInputs = form.querySelectorAll('input[type="file"]');
             for (let input of fileInputs) {
                 if (input.files && input.files.length > 0) {
-                    const fileSize = input.files[0].size; 
-                    const maxSize = 10 * 1024 * 1024; 
-                    if (fileSize > maxSize) {
-                        e.preventDefault(); // Обязательно прерываем отправку
-                        showToast('Размер файла превышает 10 МБ. Пожалуйста, прикрепите файл меньшего размера.', 'error');
-                        input.value = ''; // Сбрасываем выбранный файл
-                        return; 
+                    if (input.files[0].size > 10 * 1024 * 1024) {
+                        showToast('Размер файла превышает 10 МБ. Прикрепите файл поменьше.', 'error');
+                        input.value = '';
+                        return; // Прерываем
                     }
                 }
             }
         }
 
-        // 2. ПРОВЕРКА ТЕСТА (только для формы вакансии)
+        // 2. ПРОВЕРКА ТЕСТА (вакансии)
         if (formId === 'vacancyForm') {
             let allFilled = true;
             for (let i = 1; i <= 10; i++) {
@@ -1258,32 +1232,34 @@ function setupAjaxForm(formId) {
                 }
             }
             if (!allFilled) {
-                e.preventDefault(); // Обязательно прерываем отправку
                 showToast('Пожалуйста, пройдите тестирование (нажмите кнопку "Пройти тестирование").', 'warning');
                 const modal = document.getElementById('questionModal');
                 if(modal) {
                     modal.classList.add('active');
                     document.body.style.overflow = 'hidden';
                 }
-                return;
+                return; // Прерываем
             }
         }
 
-        // 3. БЛОКИРОВКА КНОПКИ (чтобы не нажали дважды)
-        submitBtn = form.querySelector('button[type="submit"]');
-        originalBtnText = submitBtn.innerHTML;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
         submitBtn.disabled = true;
-        submitBtn.style.opacity = '0.7';
 
-        // 4. ОТПРАВКА ДАННЫХ
+        // 3. МЕХАНИЗМ ОТПРАВКИ
         if (hasFiles) {
-            // ВАЖНО: Мы НЕ делаем e.preventDefault() для формы с файлами.
-            // Браузер сам отправит её по стандартному пути, но результат загрузит в невидимый iframe.
-            isSubmitting = true;
+            // ФАЙЛЫ: Отправляем стандартным способом (чтобы 100% дошло)
+            // Перед отправкой динамически меняем скрытое поле _next, чтобы FormSubmit вернул нас с меткой success
+            const nextInput = form.querySelector('input[name="_next"]');
+            if (nextInput) {
+                nextInput.value = window.location.origin + window.location.pathname + '?form_status=success';
+            }
+            
+            // Запускаем родную отправку в обход preventDefault
+            form.submit(); 
         } else {
-            // Если файлов нет (форма контактов), используем современный Fetch API
-            e.preventDefault();
+            // БЕЗ ФАЙЛОВ: Используем быстрый AJAX
             const formData = new FormData(form);
             const actionUrl = form.getAttribute('action').replace('formsubmit.co/', 'formsubmit.co/ajax/');
 
@@ -1295,26 +1271,23 @@ function setupAjaxForm(formId) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast('Сообщение успешно отправлено! Мы скоро свяжемся с вами.', 'success');
+                    showToast('Сообщение успешно отправлено!', 'success');
                     form.reset();
                 } else {
-                    showToast('Не удалось отправить сообщение. Сервер отклонил запрос.', 'error');
+                    showToast('Не удалось отправить сообщение.', 'error');
                 }
             })
             .catch(error => {
-                console.error('Ошибка отправки:', error);
-                showToast('Отсутствует подключение к сети. Проверьте интернет и попробуйте снова.', 'error');
+                showToast('Ошибка сети. Проверьте интернет.', 'error');
             })
             .finally(() => {
-                // Разблокируем кнопку
                 submitBtn.innerHTML = originalBtnText;
                 submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
             });
         }
     });
 }
 
-// Инициализация обеих форм
-setupAjaxForm('contactsForm');
-setupAjaxForm('vacancyForm');
+// Инициализируем
+setupSmartForm('contactsForm');
+setupSmartForm('vacancyForm');
