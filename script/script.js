@@ -1105,15 +1105,110 @@ if (dividers.length) {
 //     updateLogoByScroll();
 // }
 
+document.addEventListener('submit', function(e) {
+    const fileInput = document.getElementById('fileInput');
+    const file = fileInput.files[0];
+    const errorElement = document.getElementById('error');
+    const maxSize = 10 * 1024 * 1024; // 10 МБ
+
+    if (file && file.size > maxSize) {
+        e.preventDefault(); // Остановить отправку формы
+        errorElement.textContent = 'Файл слишком большой. Максимальный размер: 10 МБ.';
+    } else {
+        errorElement.textContent = ''; // Очистить ошибку
+    }
+});
+// === СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ===
+// Динамически добавляем стили, чтобы не менять CSS-файлы
+const toastStyles = document.createElement('style');
+toastStyles.innerHTML = `
+    .toast-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .toast {
+        min-width: 280px;
+        padding: 16px 24px;
+        border-radius: 12px;
+        color: #fff;
+        font-family: 'Inter', sans-serif;
+        font-size: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        opacity: 0;
+        transform: translateX(100%);
+        animation: slideInToast 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        transition: opacity 0.4s, transform 0.4s;
+    }
+    .toast.hide {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    .toast.success { background-color: #223387; } /* Фирменный синий ИМС РУС */
+    .toast.error { background-color: #e53935; } /* Красный для ошибок */
+    .toast.warning { background-color: #fb8c00; color: #fff; } /* Оранжевый для предупреждений */
+    @keyframes slideInToast {
+        to { opacity: 1; transform: translateX(0); }
+    }
+`;
+document.head.appendChild(toastStyles);
+
+const toastContainer = document.createElement('div');
+toastContainer.className = 'toast-container';
+document.body.appendChild(toastContainer);
+
+// Функция вызова красивого уведомления
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    // Подбираем иконку FontAwesome (библиотека уже подключена у вас на сайте)
+    let icon = 'fa-info-circle';
+    if (type === 'success') icon = 'fa-check-circle';
+    if (type === 'error') icon = 'fa-exclamation-circle';
+    if (type === 'warning') icon = 'fa-exclamation-triangle';
+
+    toast.innerHTML = `<i class="fas ${icon}" style="font-size: 1.4em;"></i> <span style="line-height: 1.4;">${message}</span>`;
+    toastContainer.appendChild(toast);
+
+    // Автоматически скрываем через 5 секунд
+    setTimeout(() => {
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 400); // Ждем завершения анимации
+    }, 5000);
+}
+
 // === ОТПРАВКА ФОРМ ЧЕРЕЗ FORMSUBMIT (AJAX) ===
 function setupAjaxForm(formId) {
     const form = document.getElementById(formId);
     if (!form) return;
 
     form.addEventListener('submit', function(e) {
-        e.preventDefault(); // Блокируем стандартный переход страницы
+        e.preventDefault();
 
-        // Специфичная валидация только для формы вакансий
+        // 1. ПРОВЕРКА РАЗМЕРА ФАЙЛА (ДО 10 МБ)
+        const fileInputs = form.querySelectorAll('input[type="file"]');
+        for (let input of fileInputs) {
+            if (input.files && input.files.length > 0) {
+                const fileSize = input.files[0].size; // Размер в байтах
+                const maxSize = 10 * 1024 * 1024; // 10 МБ в байтах
+                
+                if (fileSize > maxSize) {
+                    showToast('Размер файла превышает 10 МБ. Пожалуйста, прикрепите файл меньшего размера.', 'error');
+                    input.value = ''; // Сбрасываем выбранный тяжелый файл
+                    return; // Прерываем отправку формы
+                }
+            }
+        }
+
+        // 2. ПРОВЕРКА ТЕСТА (только для формы вакансии)
         if (formId === 'vacancyForm') {
             let allFilled = true;
             for (let i = 1; i <= 10; i++) {
@@ -1124,51 +1219,58 @@ function setupAjaxForm(formId) {
                 }
             }
             if (!allFilled) {
-                alert('Пожалуйста, заполните все тестовые вопросы (раздел "Пройти тестирование") перед отправкой заявки.');
-                return; // Прерываем отправку, если тест не пройден
+                showToast('Пожалуйста, пройдите тестирование (нажмите кнопку "Пройти тестирование").', 'warning');
+                
+                // Для удобства сразу открываем окно с тестом
+                const modal = document.getElementById('questionModal');
+                if(modal) {
+                    modal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+                return;
             }
         }
 
-        // Блокируем кнопку, чтобы избежать двойных кликов
+        // 3. БЛОКИРОВКА КНОПКИ НА ВРЕМЯ ОТПРАВКИ
         const submitBtn = form.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
         submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.7';
 
-        // Собираем данные (включая загруженные файлы)
+        // 4. ОТПРАВКА ДАННЫХ
         const formData = new FormData(form);
-        
-        // Для AJAX отправки FormSubmit требует добавления /ajax/ в URL
         const actionUrl = form.getAttribute('action').replace('formsubmit.co/', 'formsubmit.co/ajax/');
 
         fetch(actionUrl, {
             method: 'POST',
             body: formData,
             headers: {
-                'Accept': 'application/json' // Указываем, что ждем JSON в ответ
+                'Accept': 'application/json'
             }
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Ваша заявка успешно отправлена!');
-                form.reset(); // Очищаем поля формы после успеха
+                showToast('Сообщение успешно отправлено! Мы скоро свяжемся с вами.', 'success');
+                form.reset(); // Очищаем форму
             } else {
-                alert('Произошла ошибка при отправке. Попробуйте позже.');
+                showToast('Не удалось отправить сообщение. Сервер отклонил запрос.', 'error');
             }
         })
         .catch(error => {
-            console.error('Ошибка FormSubmit:', error);
-            alert('Ошибка сети. Проверьте подключение к интернету и повторите попытку.');
+            console.error('Ошибка отправки:', error);
+            showToast('Отсутствует подключение к сети. Проверьте интернет и попробуйте снова.', 'error');
         })
         .finally(() => {
-            // Возвращаем кнопку в исходное состояние
+            // Возвращаем кнопку в нормальное состояние
             submitBtn.innerHTML = originalBtnText;
             submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
         });
     });
 }
 
-// Инициализируем перехват для обеих форм
+// Инициализация (ID "contactsForm" вы должны были добавить в HTML на предыдущем шаге)
 setupAjaxForm('contactsForm');
 setupAjaxForm('vacancyForm');
